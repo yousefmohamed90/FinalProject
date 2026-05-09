@@ -30,7 +30,9 @@ export default function Library() {
 
       // جلب الملف وإجبار المتصفح على حفظه بصيغة Zip
       try {
-        const fileRes = await fetch(finalUrl);
+        const fileRes = await fetch(finalUrl, { mode: 'cors' });
+        if (!fileRes.ok) throw new Error("Fetch failed");
+        
         const blob = await fileRes.blob();
         const blobUrl = URL.createObjectURL(blob);
         
@@ -42,7 +44,14 @@ export default function Library() {
         a.remove();
         setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
       } catch (err) {
-        window.open(finalUrl, "_blank"); // بديل في حالة فشل الجلب
+        // Fallback: Use a hidden anchor to trigger download if fetch fails (e.g. CORS)
+        const a = document.createElement("a");
+        a.href = finalUrl;
+        a.setAttribute("download", "project-source-code.zip");
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       }
     } catch (e: any) {
       toast.error(e?.message ?? "Download failed");

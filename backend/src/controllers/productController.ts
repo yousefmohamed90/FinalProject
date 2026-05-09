@@ -287,6 +287,19 @@ export const downloadProduct = asyncHandler(
       throw new ApiError("Source code is not available for this product", 404);
     }
 
-    res.status(200).json({ sourceCodeUrl: product.sourceCodeUrl });
+    let downloadUrl = product.sourceCodeUrl;
+
+    // Convert GitHub repo URL to direct ZIP download URL
+    if (downloadUrl.includes("github.com") && !downloadUrl.endsWith(".zip")) {
+      // Basic cleanup: remove trailing slash or .git
+      downloadUrl = downloadUrl.replace(/\/$/, "").replace(/\.git$/, "");
+      
+      // GitHub supports /zipball/master (or main) which redirects to the latest zip
+      // We'll use /archive/refs/heads/main.zip as a common default, or zipball/master
+      // To be safer across different default branches, zipball/master usually works or we can try archive/master.zip
+      downloadUrl = `${downloadUrl}/archive/refs/heads/main.zip`;
+    }
+
+    res.status(200).json({ success: true, sourceCodeUrl: downloadUrl });
   },
 );
